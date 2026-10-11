@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>Doorbell</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #f3f4f6;
+      font-family: system-ui, sans-serif;
+      color: #111827;
+    }
+
+    main {
+      width: 100%;
+      max-width: 380px;
+      padding: 32px 24px;
+      background: white;
+      border-radius: 24px;
+      text-align: center;
+      box-shadow: 0 12px 40px #00000012;
+    }
+
+    .bell { font-size: 56px; }
+
+    h1 { margin-bottom: 8px; }
+
+    p {
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    button {
+      width: 100%;
+      padding: 20px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 14px;
+      background: #2563eb;
+      color: white;
+      font-size: 19px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: .6; }
+
+    #status {
+      min-height: 24px;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="bell">🔔</div>
+    <h1>At the door?</h1>
+    <p>Press the button below to let the resident know
+       you've arrived.</p>
+
+    <button id="ring">I'm at the door</button>
+    <div id="status" role="status" aria-live="polite"></div>
+  </main>
+
+  <script>
+    const TOPIC = "doorbell-home-kreedon16";
+    const button = document.getElementById("ring");
+    const status = document.getElementById("status");
+
+    let busy = false;
+
+    button.addEventListener("click", async () => {
+      if (busy) return;
+
+      busy = true;
+      button.disabled = true;
+      status.textContent = "Sending doorbell notification...";
+
+      try {
+        const url = new URL(
+          `https://ntfy.sh/${encodeURIComponent(TOPIC)}/publish`
+        );
+
+        url.searchParams.set("message", "Someone is at the door.");
+        url.searchParams.set("title", "Doorbell");
+        url.searchParams.set("priority", "5");
+
+        // A simple GET request; no response-reading permission is needed.
+        await fetch(url.toString(), {
+          method: "GET",
+          mode: "no-cors",
+          cache: "no-store"
+        });
+
+        status.textContent =
+          "Request sent. Thank you!";
+      } catch (error) {
+        status.textContent =
+          "Could not send. Please try again.";
+      } finally {
+        setTimeout(() => {
+          busy = false;
+          button.disabled = false;
+        }, 10000);
+      }
+    });
+  </script>
+</body>
+</html>
